@@ -1,0 +1,86 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Michroma&display=swap');
+img{
+    max-width:100%;
+}
+
+.home-wrapper{
+    width:100%;
+}
+.header-section {
+    min-height: 100vh;
+    background: url('https://res.cloudinary.com/do7yzlgtx/image/upload/v1711027790/bg_wmhjwz.jpg') no-repeat center bottom;
+    /* background-color: #202020; */
+    background-size: cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #FFF;
+    padding-top: 80px;
+}
+
+.header-section .container {
+    text-align: center;
+}
+
+.header-section h1 {
+    font-family: 'Michroma', sans-serif;
+    font-size: 40px;
+    line-height: 42px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.header-section h1 .fs-30 {
+    font-size: 30px;
+}
+
+.header-section .aqua-color {
+    color: #40F6DE;
+}
+
+.get-start-btn {
+    background-color: #40F6DE;
+    padding: 15px 30px;
+    color: #303030;
+    display: inline-block;
+    margin: auto;
+    font-size: 16px;
+    margin-top: 15px;
+    border: solid 1px transparent;
+    transition: all 0.7s;
+    cursor: pointer;
+}
+
+.get-start-btn:hover {
+    background-color: #7a3df8;
+    border-color: #7a3df8;
+    color: #FFF;
+}
+
+.icon-container {
+    display: flex;
+    max-width: 800px;
+    justify-content: space-around;
+    margin-top: 30px;
+}
+
+.icon-item {
+    max-width: 180px;
+    border-radius: 10px;
+    transition: all 0.5s;
+    padding: 15px;
+}
+
+.icon-item p:last-child {
+    margin-bottom: 0px;
+}
+
+.icon-item img {
+    max-height: 50px;
+}
+
+.icon-item:hover {
+    background-color: rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+}
+
