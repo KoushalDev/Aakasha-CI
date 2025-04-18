@@ -28,10 +28,11 @@ services:
     build: /frontend/
     container_name: aakasha-frontend
     restart: always
-	env_file:
+    env_file:
       - /frontend/Aakasha_ui/.env
     ports:
       - "3000:3000"
 
 volumes:
-  mysql_data: 
+  mysql_data:
+
