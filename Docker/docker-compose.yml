@@ -1,6 +1,7 @@
 services:
   mysql:
     build: ./db
+    image: mysql-db:latest
     container_name: mysql-db
     restart: always
     environment:
@@ -13,6 +14,7 @@ services:
 
   backend:
     build: ./backend
+    image: aakasha-backend:latest
     container_name: aakasha-backend
     restart: always
     env_file:
@@ -24,12 +26,11 @@ services:
 
   frontend:
     build: ./frontend
+    image: aakasha-frontend:latest
     container_name: aakasha-frontend
     restart: always
     env_file:
       - ./frontend/Aakasha_ui/.env
-    ports:
-      - "3000:3000"
 
 volumes:
   mysql_data:
