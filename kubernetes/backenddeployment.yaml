@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: Aakasha-backend
+spec:
+  replicas: 2 
+  selector:
+    matchLabels:
+      app: Aakasha-backend
+  template:
+    metadata:
+      labels:
+        app: Aakasha-backend
+    spec:
+      containers:
+      - name: Aakasha-backend
+        image: koushaldev/aakasha-backend:v1  
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 4000 
+          name: Aakasha-backend-port

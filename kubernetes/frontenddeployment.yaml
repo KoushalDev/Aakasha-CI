@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: Aakasha-frontend
+spec:
+  replicas: 2  
+  selector:
+    matchLabels:
+      app: Aakasha-frontend
+  template:
+    metadata:
+      labels:
+        app: Aakasha-frontend
+    spec:
+      containers:
+      - name: Aakasha-frontend
+        image: koushaldev/aakasha-frontend:v1  
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+         - name: Aakasha-frontend-port
+           containerPort: 3000  
+      initContainers:
+       - name: init-myservice
+         image: busybox:1.28
+         command: ['sh', '-c', "until nslookup Aakasha-backend.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for my aakasha backend; sleep 2; done"]

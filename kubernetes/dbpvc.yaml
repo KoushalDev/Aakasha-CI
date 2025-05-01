@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: Aakashadb-pvc-claim
+  labels:
+    app: Aakasha-db
+spec:
+  resources:
+    requests:
+      storage: 3GB
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce

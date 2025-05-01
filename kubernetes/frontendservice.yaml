@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: Aakasha-frontend
+spec:
+  selector:
+    app: Aakasha-frontend
+  ports:
+  - port: 3000
+    targetPort: Aakasha-frontend-port
+  type: ClusterIP
