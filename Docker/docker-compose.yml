@@ -1,17 +1,5 @@
 services:
-  mysql:
-    build: ./db
-    image: mysql-db:latest
-    container_name: mysql-db
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: rootpass
-      MYSQL_DATABASE: pbooth
-    volumes:
-      - mysql_data:/var/lib/mysql
-    ports:
-      - "3306:3306"
-
+  
   backend:
     build: ./backend
     image: aakasha-backend:latest
