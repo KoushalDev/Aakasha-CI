@@ -1,4 +1,5 @@
 import React from 'react'
+import Link from 'next/link';
 import { Wallet, ChevronsRight, Airplay, Grid, Layout, UserPlus, Users, List, Home, Briefcase, Database, Hash, DollarSign, Share, Folder, Clock, Layers, Image, CreditCard } from "react-feather";
 
 const SidebarComponent = () => {
