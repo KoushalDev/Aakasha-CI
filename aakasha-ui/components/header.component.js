@@ -1,5 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 const HeaderComponent = () => {
@@ -15,22 +16,22 @@ const HeaderComponent = () => {
         <div className="collapse navbar-collapse" id="navbarNav">
           <ul className="navbar-nav ml-auto">
             <li className="nav-item active">
-              <a className="nav-link" href="/homePage">Home</a>
+              <Link className="nav-link" href="/homePage">Home</Link>
             </li>
             <li className="nav-item">
-              <a className="nav-link" href="/featuresPage">Features</a>
+              <Link className="nav-link" href="/featuresPage">Features</Link>
             </li>
             <li className="nav-item">
-              <a className="nav-link" href="/pricingPage">Pricing</a>
+              <Link className="nav-link" href="/pricingPage">Pricing</Link>
             </li>
             <li className="nav-item">
-              <a className="nav-link" href="/contactPage">Contact</a>
+              <Link className="nav-link" href="/contactPage">Contact</Link>
             </li>
             <li className="nav-item">
-              <a className="nav-link login-btn" href="/loginPage">Login</a>
+              <Link className="nav-link login-btn" href="/loginPage">Login</Link>
             </li>
             <li className="nav-item">
-              <a className="nav-link signup-btn" href="/signupPage">Signup</a>
+              <Link className="nav-link signup-btn" href="/signupPage">Signup</Link>
             </li> 
           </ul>
         </div>

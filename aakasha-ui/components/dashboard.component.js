@@ -6,7 +6,7 @@ import SidebarComponent from './layout/sidebar.component'
 // import TobarComponent from './layout/topbar.component'
 import TopbarComponent from './layout/topbar.component'
 
-const dashboardComponent = () => {
+const DashboardComponent = () => {
   const [showCreateFolderModal, setShowCreateFolderModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const toggleCreateFolderModal = () => {
@@ -191,4 +191,4 @@ const dashboardComponent = () => {
   )
 }
 
-export default dashboardComponent
+export default DashboardComponent

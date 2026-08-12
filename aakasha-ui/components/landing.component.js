@@ -30,7 +30,7 @@ const Mainpage = () => {
             </h1>
             <div className="row">
               <div className="col-md-8 offset-md-2">
-                <p>Aakasha (Powered By Aagama Consulting Group) presents an entirely innovative solution to today's data
+                <p>Aakasha (Powered By Aagama Consulting Group) presents an entirely innovative solution to today&apos;s
                   storage challenges by utilizing the growing field of Cloud Technologies fused with the advancements made
                   in the Open Source Community</p>
                 <p><button type='button' className="get-start-btn" onClick={handleClick}>Get Start Now <span className="icon-arrow-right"></span></button></p>
