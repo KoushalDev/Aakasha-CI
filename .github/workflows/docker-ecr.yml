@@ -1,0 +1,62 @@
+name: Build and Push Docker Images
+
+on:
+  push:
+    branches:
+      - feature/dockerize-application
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  FRONTEND_REPOSITORY: aakasha-frontend
+  BACKEND_REPOSITORY: aakasha-backend
+
+jobs:
+
+  build-and-push:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout source code
+        uses: actions/checkout@v6
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set image tag
+        run: |
+          echo "IMAGE_TAG=v1.0.${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
+
+      - name: Build frontend image
+        run: |
+          docker build \
+            -t ${{ steps.login-ecr.outputs.registry }}/${{ env.FRONTEND_REPOSITORY }}:${IMAGE_TAG} \
+            ./aakasha-ui
+
+      - name: Push frontend image
+        run: |
+          docker push \
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.FRONTEND_REPOSITORY }}:${IMAGE_TAG}
+
+      - name: Build backend image
+        run: |
+          docker build \
+            -t ${{ steps.login-ecr.outputs.registry }}/${{ env.BACKEND_REPOSITORY }}:${IMAGE_TAG} \
+            ./backend
+
+      - name: Push backend image
+        run: |
+          docker push \
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.BACKEND_REPOSITORY }}:${IMAGE_TAG}
