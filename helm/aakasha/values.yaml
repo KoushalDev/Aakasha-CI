@@ -1,0 +1,26 @@
+frontend:
+  replicaCount: 2
+
+  image:
+    repository: 185427174197.dkr.ecr.us-east-1.amazonaws.com/aakasha-frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 3000
+
+
+backend:
+  replicaCount: 2
+
+  image:
+    repository: 185427174197.dkr.ecr.us-east-1.amazonaws.com/aakasha-backend
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 3005
+    targetPort: 3005

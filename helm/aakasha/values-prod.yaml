@@ -1,0 +1,20 @@
+namespace: aakasha-prod
+
+frontend:
+  replicaCount: 3
+
+  image:
+    tag: latest
+
+  env:
+    NEXT_PUBLIC_BACKEND_URL: http://aakasha-backend:3005
+
+backend:
+  replicaCount: 3
+
+  image:
+    tag: latest
+
+mysql:
+  database: pbooth
+  username: pbooth
