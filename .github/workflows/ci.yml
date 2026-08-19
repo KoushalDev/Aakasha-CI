@@ -1,0 +1,219 @@
+name: Aakasha CI
+
+on:
+  push:
+    branches:
+      - "feature/**"
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  FRONTEND_REPOSITORY: aakasha-frontend
+  BACKEND_REPOSITORY: aakasha-backend
+
+jobs:
+
+  # ==========================================================
+  # 1. CODE QUALITY + SECURITY
+  # ==========================================================
+
+  quality-and-security:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout source code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      # ------------------------------------------------------
+      # Node setup
+      # ------------------------------------------------------
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # ------------------------------------------------------
+      # Frontend dependencies
+      # ------------------------------------------------------
+
+      - name: Install frontend dependencies
+        working-directory: aakasha-ui
+        run: npm ci
+
+      # ------------------------------------------------------
+      # Backend dependencies
+      # ------------------------------------------------------
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+
+      # ------------------------------------------------------
+      # Frontend build
+      # ------------------------------------------------------
+
+      - name: Build frontend
+        working-directory: aakasha-ui
+        run: npm run build
+
+      # ------------------------------------------------------
+      # Backend syntax/build check
+      # ------------------------------------------------------
+
+      - name: Backend check
+        working-directory: backend
+        run: npm run build --if-present
+
+      # ------------------------------------------------------
+      # Dependency security scan
+      # ------------------------------------------------------
+
+      - name: Frontend npm audit
+        working-directory: aakasha-ui
+        run: npm audit --audit-level=high
+
+      - name: Backend npm audit
+        working-directory: backend
+        run: npm audit --audit-level=high
+
+      # ------------------------------------------------------
+      # Trivy filesystem scan
+      # ------------------------------------------------------
+
+      - name: Trivy filesystem scan
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: 1
+
+      # ------------------------------------------------------
+      # SonarQube
+      # ------------------------------------------------------
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v7
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+  # ==========================================================
+  # 2. DOCKER BUILD + ECR
+  # ==========================================================
+
+  docker:
+
+    needs: quality-and-security
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout source code
+        uses: actions/checkout@v6
+
+      # ------------------------------------------------------
+      # AWS authentication using OIDC
+      # ------------------------------------------------------
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # ------------------------------------------------------
+      # ECR login
+      # ------------------------------------------------------
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # ------------------------------------------------------
+      # Image tag
+      # ------------------------------------------------------
+
+      - name: Set image tag
+        run: |
+          IMAGE_TAG=${GITHUB_SHA::7}
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+
+          echo "IMAGE TAG: $IMAGE_TAG"
+
+      # ------------------------------------------------------
+      # Build frontend
+      # ------------------------------------------------------
+
+      - name: Build frontend image
+        run: |
+          docker build \
+            -t ${{ steps.login-ecr.outputs.registry }}/${{ env.FRONTEND_REPOSITORY }}:${IMAGE_TAG} \
+            ./aakasha-ui
+
+      # ------------------------------------------------------
+      # Build backend
+      # ------------------------------------------------------
+
+      - name: Build backend image
+        run: |
+          docker build \
+            -t ${{ steps.login-ecr.outputs.registry }}/${{ env.BACKEND_REPOSITORY }}:${IMAGE_TAG} \
+            ./backend
+
+      # ------------------------------------------------------
+      # Trivy frontend image scan
+      # ------------------------------------------------------
+
+      - name: Scan frontend image
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          image-ref: ${{ steps.login-ecr.outputs.registry }}/${{ env.FRONTEND_REPOSITORY }}:${IMAGE_TAG}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: 1
+
+      # ------------------------------------------------------
+      # Trivy backend image scan
+      # ------------------------------------------------------
+
+      - name: Scan backend image
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          image-ref: ${{ steps.login-ecr.outputs.registry }}/${{ env.BACKEND_REPOSITORY }}:${IMAGE_TAG}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: 1
+
+      # ------------------------------------------------------
+      # Push frontend
+      # ------------------------------------------------------
+
+      - name: Push frontend image
+        run: |
+          docker push \
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.FRONTEND_REPOSITORY }}:${IMAGE_TAG}
+
+      # ------------------------------------------------------
+      # Push backend
+      # ------------------------------------------------------
+
+      - name: Push backend image
+        run: |
+          docker push \
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.BACKEND_REPOSITORY }}:${IMAGE_TAG}

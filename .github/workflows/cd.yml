@@ -1,0 +1,283 @@
+name: Aakasha CD
+
+on:
+  workflow_run:
+    workflows:
+      - Aakasha CI
+    types:
+      - completed
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+
+  # ==========================================================
+  # DEV
+  # ==========================================================
+
+  deploy-dev:
+
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      startsWith(github.event.workflow_run.head_branch, 'feature/')
+
+    runs-on: ubuntu-latest
+
+    environment:
+      name: development
+
+    steps:
+
+      # ------------------------------------------------------
+      # Checkout exact commit tested by CI
+      # ------------------------------------------------------
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      # ------------------------------------------------------
+      # AWS authentication
+      # ------------------------------------------------------
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # ------------------------------------------------------
+      # Terraform
+      # ------------------------------------------------------
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: terraform/environments/dev
+        run: terraform init
+
+      - name: Terraform Validate
+        working-directory: terraform/environments/dev
+        run: terraform validate
+
+      - name: Terraform Plan
+        working-directory: terraform/environments/dev
+        run: terraform plan
+
+      - name: Terraform Apply
+        working-directory: terraform/environments/dev
+        run: terraform apply -auto-approve
+
+      # ------------------------------------------------------
+      # Kubernetes tools
+      # ------------------------------------------------------
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+
+      # ------------------------------------------------------
+      # EKS authentication
+      # ------------------------------------------------------
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --region $AWS_REGION \
+            --name aakasha-dev
+
+      # ------------------------------------------------------
+      # Verify cluster
+      # ------------------------------------------------------
+
+      - name: Verify cluster
+        run: |
+          kubectl get nodes
+
+      # ------------------------------------------------------
+      # Namespace
+      # ------------------------------------------------------
+
+      - name: Create namespace
+        run: |
+          kubectl create namespace aakasha-dev \
+            --dry-run=client \
+            -o yaml | kubectl apply -f -
+
+      # ------------------------------------------------------
+      # Helm lint
+      # ------------------------------------------------------
+
+      - name: Helm lint
+        run: |
+          helm lint ./helm/aakasha \
+            -f ./helm/aakasha/values-dev.yaml
+
+      # ------------------------------------------------------
+      # Deploy
+      # ------------------------------------------------------
+
+      - name: Deploy application
+        run: |
+
+          IMAGE_TAG=${{ github.event.workflow_run.head_sha }}
+
+          IMAGE_TAG=${IMAGE_TAG:0:7}
+
+          echo "Deploying image: $IMAGE_TAG"
+
+          helm upgrade --install aakasha \
+            ./helm/aakasha \
+            -f ./helm/aakasha/values-dev.yaml \
+            --set frontend.image.tag=$IMAGE_TAG \
+            --set backend.image.tag=$IMAGE_TAG \
+            --namespace aakasha-dev \
+            --create-namespace \
+            --wait \
+            --timeout 10m
+
+      # ------------------------------------------------------
+      # Verify
+      # ------------------------------------------------------
+
+      - name: Verify deployment
+        run: |
+          kubectl get pods -n aakasha-dev
+          kubectl get svc -n aakasha-dev
+
+
+
+        # ==========================================================
+  # PRODUCTION
+  # ==========================================================
+
+  deploy-prod:
+
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main'
+
+    runs-on: ubuntu-latest
+
+    environment:
+      name: production
+
+    steps:
+
+      - name: Checkout exact CI commit
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      # ------------------------------------------------------
+      # AWS
+      # ------------------------------------------------------
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # ------------------------------------------------------
+      # Terraform
+      # ------------------------------------------------------
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: terraform/environments/prod
+        run: terraform init
+
+      - name: Terraform Validate
+        working-directory: terraform/environments/prod
+        run: terraform validate
+
+      - name: Terraform Plan
+        working-directory: terraform/environments/prod
+        run: terraform plan
+
+      - name: Terraform Apply
+        working-directory: terraform/environments/prod
+        run: terraform apply -auto-approve
+
+      # ------------------------------------------------------
+      # Kubernetes
+      # ------------------------------------------------------
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+
+      # ------------------------------------------------------
+      # EKS
+      # ------------------------------------------------------
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --region $AWS_REGION \
+            --name aakasha-prod
+
+      - name: Verify cluster
+        run: |
+          kubectl get nodes
+
+      # ------------------------------------------------------
+      # Namespace
+      # ------------------------------------------------------
+
+      - name: Create namespace
+        run: |
+          kubectl create namespace aakasha-prod \
+            --dry-run=client \
+            -o yaml | kubectl apply -f -
+
+      # ------------------------------------------------------
+      # Helm
+      # ------------------------------------------------------
+
+      - name: Helm lint
+        run: |
+          helm lint ./helm/aakasha \
+            -f ./helm/aakasha/values-prod.yaml
+
+      - name: Deploy application
+        run: |
+
+          IMAGE_TAG=${{ github.event.workflow_run.head_sha }}
+
+          IMAGE_TAG=${IMAGE_TAG:0:7}
+
+          echo "Deploying image: $IMAGE_TAG"
+
+          helm upgrade --install aakasha \
+            ./helm/aakasha \
+            -f ./helm/aakasha/values-prod.yaml \
+            --set frontend.image.tag=$IMAGE_TAG \
+            --set backend.image.tag=$IMAGE_TAG \
+            --namespace aakasha-prod \
+            --create-namespace \
+            --wait \
+            --timeout 10m
+
+      # ------------------------------------------------------
+      # Verify
+      # ------------------------------------------------------
+
+      - name: Verify production
+        run: |
+          kubectl get pods -n aakasha-prod
+          kubectl get svc -n aakasha-prod
