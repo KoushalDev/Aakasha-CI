@@ -17,6 +17,4 @@ backend:
     repository: 185427174197.dkr.ecr.us-east-1.amazonaws.com/aakasha-backend
     tag: latest
 
-mysql:
-  database: pbooth
-  username: pbooth
+
