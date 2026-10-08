@@ -2,7 +2,7 @@
 
 **Aakasha is a subscription-based cloud platform for storing and delivering large volumes of photos and videos.**
 
-The platform enables **photographers and videographers to upload high-resolution media to the cloud and provide their customers with secure access to their files. Customers can access and retrieve their photos and videos through the platform based on their subscription.
+The platform enables photographers and videographers to upload high-resolution media to the cloud and provide their customers with secure access to their files. Customers can access and retrieve their photos and videos through the platform based on their subscription.
 
 ## Application
 
